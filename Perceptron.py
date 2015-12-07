@@ -82,26 +82,28 @@ def readTestingImages():
 	# The List to store the images
 	list = []
 
-	curr_image = zeros((28,28))
+	curr_image = []
 	i = 0
 
 
 	for line in file:
 		# Remove the \n
-		line = line.rstrip()
+		line = line[0:28]
 
 		j = 0
 
 		for character in line:
 			if line[j] != ' ':
-				curr_image[(i)%28][j] = 1
+				curr_image.append(1)
+			else:
+				curr_image.append(0)
 			j+=1
 
 		i+=1
 
 		if (i%28) == 0:
-			list.append(curr_image)
-			curr_image = zeros((28,28))
+			list.append(array(curr_image))
+			curr_image = []
 
 	return list
 
@@ -142,14 +144,34 @@ def classify(weightList, imagesList, labels, epochs = 200, bias = 0, randomItera
 		rightPercentages.append(float(right)/5000)
 		if float(right)/5000 >= 1.0: break
 
-	return rightPercentages
+	return rightPercentages, weightList
 
 
+def testImages(weightList, imagesList, labels):
+	right = 0
+	guessedList = []
+	for curr in xrange(1000): #iterate over all training images
+		totalList = [] #make an empty list to pick the argmax from
+
+		for x in xrange(10):
+			total = dot(weightList[x],imagesList[curr]); # dots weight and image vector
+
+			totalList.append(total) # append to list
+
+		classifiedImage = totalList.index(max(totalList)) # get argmax from total list
+		guessedList.append(classifiedImage)
+
+		if classifiedImage == labels[curr]:
+			right += 1
+			continue
+
+	rightPercentage = float(right) / 1000
+
+	return rightPercentage, guessedList
 
 
 def main():
 	start_time = time.time() 
-	#priorList = readTrainingLabels()
 	imagesList = readTrainingImages()
 	labelsList, labels = readTrainingLabels()
 	weightList = [] # list of weights for 0-9
@@ -164,9 +186,9 @@ def main():
 		classesList[labels[x]].addTrainingData(imagesList[x])
 
 	for x in xrange(0,10):
-		weightList.append(makeWeights(1)); # 0 intilizes all of them to 0, anything else is random
+		weightList.append(makeWeights(0)); # 0 intilizes all of them to 0, anything else is random
 
-	rightPercentages = classify(weightList, imagesList, labels)
+	rightPercentages, weightList = classify(weightList, imagesList, labels)
 
 	with open('data.csv' , 'wb') as csvfile:
 		writer = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -176,8 +198,24 @@ def main():
 
 	print(" --- %s seconds ---" % (time.time() - start_time))
 
+	testingImagesList = readTestingImages()
+	testClasses, testLabels = readTestingLabels()
+
+	confusionMatrix = zeros((10,10))
+
+	rightPercentage, guessedLabels = testImages(weightList, testingImagesList, testLabels)
+
+	print "Percentage correct is ", rightPercentage
+
+	for x in xrange(0,len(testLabels)):
+		confusionMatrix[testLabels[x]][guessedLabels[x]] += 1
+
+	for x in xrange(0,10):
+		for y in xrange(0,10):
+			confusionMatrix[x][y] = confusionMatrix[x][y] * 100 / testClasses[x]
 
 
+	print confusionMatrix
 
 
 if __name__ == '__main__':
