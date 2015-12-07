@@ -7,9 +7,11 @@ class Cell(object):
 		self.y = curr_y
 		self.wall = False
 		self.reward = -0.04
-		self.utility = 0
+		self.utility = 0.0
+
 		# Left, Up, Right, Down
-		self.qValues = [0, 0, 0, 0]
+		self.qValues = [0.0, 0.0, 0.0, 0.0]
+		self.qCount = [0, 0, 0, 0]
 
 	def setReward(self, rewardStatus):
 		self.reward = rewardStatus
