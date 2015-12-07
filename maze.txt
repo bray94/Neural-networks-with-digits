@@ -1,0 +1,6 @@
+F	-1	F	F	F	F
+F	F	F	T	-1	F
+F	F	F	T	F	3
+F	F	F	T	F	F
+F	F	F	F	F	F
+1	-1	F	T	-1	-1
