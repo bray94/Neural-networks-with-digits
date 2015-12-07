@@ -1,5 +1,4 @@
 from numpy import *
-from numberClass import *
 import time
 import csv
 import random as r
@@ -175,15 +174,6 @@ def main():
 	imagesList = readTrainingImages()
 	labelsList, labels = readTrainingLabels()
 	weightList = [] # list of weights for 0-9
-
-	classesList = []
-
-	for x in xrange(0,10):
-		classesList.append(numberClass(x))
-		classesList[x].setPrior(labelsList[x])
-
-	for x in xrange(0,len(imagesList)):
-		classesList[labels[x]].addTrainingData(imagesList[x])
 
 	for x in xrange(0,10):
 		weightList.append(makeWeights(0)); # 0 intilizes all of them to 0, anything else is random
