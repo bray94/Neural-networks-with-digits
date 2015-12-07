@@ -1,4 +1,6 @@
 from cell import *
+from numpy import *
+from random import randint
 
 class Puzzle(object):
 
@@ -39,7 +41,7 @@ class Puzzle(object):
 				elif character == 'F':
 					pass
 				else:
-					self.maze[x][y].setReward(int(character))
+					self.maze[x][y].setReward(float(character))
 
 				y += 1
 
@@ -48,8 +50,17 @@ class Puzzle(object):
 		file.close()
 
 	def setUtilitiesMDP(self):
+
+		for x in range(0,6):
+			for y in range(0,6):
+				if (abs(self.maze[x][y].reward) >= 1):
+					self.maze[x][y].utility = self.maze[x][y].reward
 		
-		for n in range(1,500):
+		
+
+		for n in range(1,2):
+
+			#breakOut = False
 
 			for x in (range(0,6)):
 
@@ -61,11 +72,13 @@ class Puzzle(object):
 					# Reward States are terminal and we reached a reward state
 					if (self.endOnRewardState == True) and (abs(self.maze[x][y].reward) >= 1):
 						self.maze[x][y].utility = self.maze[x][y].reward
+						#breakOut = True
+						#break
 						continue
 						#raise Exception('Reached a Reward State')
 
 					# Leftwards, Upwards, Rightwards, Downwards
-					potentialValues = [0, 0, 0, 0]
+					potentialValues = [0.0, 0.0, 0.0, 0.0]
 
 					# Intended Direction is left
 					if (y-1 < 0) or (self.maze[x][y-1].wall == True):
@@ -111,17 +124,131 @@ class Puzzle(object):
 					if y+1 <= 5:
 						potentialValues[3] += 0.1 * self.maze[x][y+1].utility
 
+					print potentialValues
 					self.maze[x][y].utility = self.maze[x][y].reward + self.discountFactor * max(potentialValues)
+				#if (breakOut == True):
+				#	break
+				#else:
+				#	continue
+				#	breakOut = False
+				#	break
+
+	def computeAction(self, currX, currY):
+		# Returns which action to take
+		# 0 - Left 		1 - Up 		2 - Right 	3 - Down
+
+		# max = -1000.0
+		# index = 0
+
+		# for u in xrange(0,4):
+		# 	if(self.maze[currX][currY].qCount[u]%100>50):
+		# 		if(self.maze[currX][currY].qValues[u] > max):
+		# 			max = self.maze[currX][currY].qValues[u]
+		# 			index = u
+		# 	else:
+		# 		max = 3* abs(self.maze[currX][currY].qValues[u])
+		# 		index = u
+
+		index = self.maze[currX][currY].qCount.index(min(self.maze[currX][currY].qCount))
+		#x = randint(0, 3)
+		#print x
+		#return x
+		return index
+
 
 	def setUtilitiesTDQL(self):
-		pass
-		#startX = 3, startY = 1
+		startX = 3
+		startY = 1
+		beta = 1.0
 
-		#for n in range(1,500):
+		# Set the utilities for reward states as their rewards
+		for x in range(0,6):
+			for y in range(0,6):
+				if (abs(self.maze[x][y].reward) >= 1):
+					self.maze[x][y].utility = self.maze[x][y].reward
+					for dir in range(0,4):
+						self.maze[x][y].qValues[dir] = self.maze[x][y].reward
 
-		#	time = 0
+		numTrials = 0
 
+		while abs(beta) > .00001:
+		#while numTrials < 5000:
+			
+			# Begin at the start state
+			curr_x = startX
+			curr_y = startY
 
+			num_moves = 1
+
+			while True:
+				# Terminal State
+				if (abs(self.maze[curr_x][curr_y].reward) >= 1):
+					#beta = 1.0
+					#print "Break: ", numTrials
+					break
+
+				alpha = float(60)/(59+num_moves)
+
+				# Blackboxed action from this state
+				curr_action = self.computeAction(curr_x, curr_y)
+				
+				next_X = curr_x
+				next_Y = curr_y
+
+				# Update the current co-ordinates based on curr_action
+				if curr_action == 0:
+					if curr_y-1 >= 0 and self.maze[curr_x][curr_y-1].wall != True:
+						next_Y = curr_y - 1
+					else:
+						next_Y = curr_y
+				elif curr_action == 1:
+					if curr_x-1 >= 0 and self.maze[curr_x-1][curr_y].wall != True:
+						next_X = curr_x - 1
+					else:
+						next_X = curr_x
+				elif curr_action == 2:
+					if curr_y+1 <= 5 and self.maze[curr_x][curr_y+1].wall != True:
+						next_Y = curr_y + 1
+					else:
+						next_Y = curr_y
+				else:
+					if curr_x+1 <= 5 and self.maze[curr_x+1][curr_y].wall != True:
+						next_X = curr_x +1
+					else:
+						next_X = curr_x
+
+				# Perform TD update
+				beta = float(alpha) * (self.maze[curr_x][curr_y].reward + ( self.discountFactor * max(self.maze[next_X][next_Y].qValues)) - self.maze[curr_x][curr_y].qValues[curr_action])
+				self.maze[curr_x][curr_y].qValues[curr_action] += float(beta)
+
+				#print "Q-Values: ", self.maze[curr_x][curr_y].qValues[curr_action]
+				#print "Alpha: ", float(alpha)
+				#print "Discount times", ( self.discountFactor * max(self.maze[next_X][next_Y].qValues))
+				#print "Beta: ", beta
+
+				# Update Variables
+				self.maze[curr_x][curr_y].qCount[curr_action] += 1
+
+				#print "X: ", curr_x, "Y: ", curr_y
+				#for temp in range(4):
+				#	print self.maze[curr_x][curr_y].qCount[temp] 
+
+				curr_x = next_X
+				curr_y = next_Y
+
+				#print "num_moves ", num_moves
+				num_moves += 1
+
+			# Increment the number of times we've gone through the maze
+			numTrials += 1
+
+		#print "Num Trials", numTrials
+
+		# Set the utilities for all states
+		for x in range(0,6):
+			for y in range(0,6):
+				if (abs(self.maze[x][y].reward) < 1):
+					self.maze[x][y].utility = max(self.maze[x][y].qValues)
 
 
 def main():
