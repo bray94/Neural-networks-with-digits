@@ -1,6 +1,9 @@
 from cell import *
 from numpy import *
 from random import randint
+#from sklearn.metrics import * 
+from math import sqrt
+#import matplotlib.pyplot as plt
 
 class Puzzle(object):
 
@@ -13,11 +16,20 @@ class Puzzle(object):
 		self.discountFactor = 0.7
 
 	def printUtilities(self):
-
 		for x in xrange(0,6):
 			for y in xrange(0,6):
 				print self.maze[x][y].utility, "\t",
 			print "\n"
+		
+		
+	# def copyUtilities(self):
+	#     temp = [6][6]
+
+	# 	for x in xrange(0,6):
+	# 		for y in xrange(0,6):
+	# 			temp[x][y] = self.maze[x][y].utility
+				
+	# 	return temp
 
 	def readInMaze(self):
 		# File containing maze
@@ -49,7 +61,7 @@ class Puzzle(object):
 
 		file.close()
 
-	def setUtilitiesMDP(self):
+	def setUtilitiesMDP(self, iterations):
 
 		for x in range(0,6):
 			for y in range(0,6):
@@ -58,13 +70,15 @@ class Puzzle(object):
 		
 		
 
-		for n in range(1,2):
+		for n in range(iterations):
 
 			#breakOut = False
 
 			for x in (range(0,6)):
 
 				for y in range(0,6):
+
+					print "x: ", x," y: ", y, " reward: ",self.maze[x][y].reward
 
 					if self.maze[x][y].wall == True:
 						continue
@@ -82,49 +96,69 @@ class Puzzle(object):
 
 					# Intended Direction is left
 					if (y-1 < 0) or (self.maze[x][y-1].wall == True):
-						potentialValues[0] = 0
+						potentialValues[0] += 0.8*self.maze[x][y].utility
 					else:
-						if y-1 >= 0:
-							potentialValues[0] += 0.8 * self.maze[x][y-1].utility
-					if x-1 >= 0:
+						potentialValues[0] += 0.8 * self.maze[x][y-1].utility
+
+					if (x-1 >= 0) and (self.maze[x-1][y].wall == False):
 						potentialValues[0] += 0.1 * self.maze[x-1][y].utility
-					if x+1 <= 5:
+					else:
+						potentialValues[0] += 0.1*self.maze[x][y].utility
+
+					if (x+1 <= 5) and (self.maze[x+1][y].wall == False):
 						potentialValues[0] += 0.1 * self.maze[x+1][y].utility
+					else:
+						potentialValues[0] += 0.1*self.maze[x][y].utility
 
 					# Intended Direction is up
 					if (x-1 < 0) or (self.maze[x-1][y].wall == True):
-						potentialValues[1] = 0
+						potentialValues[1] += 0.8*self.maze[x][y].utility
 					else:
-						if x-1 >= 0:
-							potentialValues[1] += 0.8 * self.maze[x-1][y].utility
-					if y-1 >= 0:
+						potentialValues[1] += 0.8 * self.maze[x-1][y].utility
+
+					if (y-1 >= 0) and (self.maze[x][y-1].wall == False):
 						potentialValues[1] += 0.1 * self.maze[x][y-1].utility
-					if y+1 <= 5:
+					else:
+						potentialValues[1] += 0.1*self.maze[x][y].utility
+
+					if (y+1 <= 5) and (self.maze[x][y+1].wall == False):
 						potentialValues[1] += 0.1 * self.maze[x][y+1].utility
+					else:
+						potentialValues[1] += 0.1*self.maze[x][y].utility
 
 					# Intended Direction is right
 					if (y+1 > 5) or (self.maze[x][y+1].wall == True):
-						potentialValues[2] = 0
+						potentialValues[2] += 0.8*self.maze[x][y].utility
 					else:
-						if y+1 <= 5:
-							potentialValues[2] += 0.8 * self.maze[x][y+1].utility
-					if x-1 >= 0:
+						potentialValues[2] += 0.8 * self.maze[x][y+1].utility
+
+					if (x-1 >= 0) and (self.maze[x-1][y].wall == False):
 						potentialValues[2] += 0.1 * self.maze[x-1][y].utility
-					if x+1 <= 5:
+					else:
+						potentialValues[2] += 0.1*self.maze[x][y].utility
+
+					if (x+1 <= 5) and (self.maze[x+1][y].wall == False):
 						potentialValues[2] += 0.1 * self.maze[x+1][y].utility
+					else:
+						potentialValues[2] += 0.1*self.maze[x][y].utility
 
 					# Intended Direction is down
 					if (x+1 > 5) or (self.maze[x+1][y].wall == True):
-						potentialValues[3] = 0
+						potentialValues[3] += 0.8*self.maze[x][y].utility
 					else:
-						if x+1 <= 5:
-							potentialValues[3] += 0.8 * self.maze[x+1][y].utility
-					if y-1 >= 0:
-						potentialValues[3] += 0.1 * self.maze[x][y-1].utility
-					if y+1 <= 5:
-						potentialValues[3] += 0.1 * self.maze[x][y+1].utility
+						potentialValues[3] += 0.8 * self.maze[x+1][y].utility
 
-					print potentialValues
+					if (y-1 >= 0) and (self.maze[x][y-1].wall == False):
+						potentialValues[3] += 0.1 * self.maze[x][y-1].utility
+					else:
+						potentialValues[3] += 0.1*self.maze[x][y].utility
+
+					if (y+1 <= 5) and (self.maze[x][y+1].wall == False):
+						potentialValues[3] += 0.1 * self.maze[x][y+1].utility
+					else:
+						potentialValues[3] += 0.1*self.maze[x][y].utility
+
+					#print (potentialValues)
 					self.maze[x][y].utility = self.maze[x][y].reward + self.discountFactor * max(potentialValues)
 				#if (breakOut == True):
 				#	break
@@ -254,8 +288,32 @@ class Puzzle(object):
 def main():
 	puzzle = Puzzle(True)	# Reward States are considered Terminal States
 	puzzle.readInMaze()
-	puzzle.setUtilitiesMDP()
+	#rmse = [500]
+
+	puzzle.setUtilitiesMDP(50)
 	puzzle.printUtilities()
+	puzzle.setUtilitiesTDQL()
+	puzzle.printUtilities()
+	
+	#Utilities
+	#for i in xrange(0,50):
+	#	puzzle.setUtilitiesMDP(i)
+		
+	    
+	
+	#RMSE
+	# for i in xrange(0,500):
+ #        puzzle.setUtilitiesMDP(i)
+ #        value = puzzle.copyUtilities()
+ #        puzzle.setUtilitiesTDQL()
+ #        tdq = puzzle.copyUtilities()
+	
+        
+ #        rmse[i] = sqrt(mean_squared_error(value, tdq))
+    
+ #    plt.plot(rmse)
+ #    plt.show()
+	
 
 if __name__ == '__main__':
 	main()
