@@ -13,7 +13,7 @@ class Puzzle(object):
 
 		self.maze = [ [ Cell(x, y) for y in range(6)] for x in range(6) ]
 		self.endOnRewardState = endOnReward
-		self.discountFactor = 0.7
+		self.discountFactor = 0.99
 
 	def printUtilities(self):
 		for x in xrange(0,6):
@@ -23,7 +23,7 @@ class Puzzle(object):
 		
 		
 	# def copyUtilities(self):
-	#     temp = [6][6]
+	#     temp = zeros((6,6))
 
 	# 	for x in xrange(0,6):
 	# 		for y in xrange(0,6):
@@ -205,14 +205,12 @@ class Puzzle(object):
 
 		numTrials = 0
 
-		while abs(beta) > .00001:
-		#while numTrials < 5000:
+		#while abs(beta) > .00001:
+		while numTrials < 5000:
 			
 			# Begin at the start state
 			curr_x = startX
 			curr_y = startY
-
-			num_moves = 1
 
 			while True:
 				# Terminal State
@@ -221,7 +219,7 @@ class Puzzle(object):
 					#print "Break: ", numTrials
 					break
 
-				alpha = float(60)/(59+num_moves)
+				alpha = float(600000)/(599999+numTrials)
 
 				# Blackboxed action from this state
 				curr_action = self.computeAction(curr_x, curr_y)
@@ -252,7 +250,10 @@ class Puzzle(object):
 						next_X = curr_x
 
 				# Perform TD update
-				beta = float(alpha) * (self.maze[curr_x][curr_y].reward + ( self.discountFactor * max(self.maze[next_X][next_Y].qValues)) - self.maze[curr_x][curr_y].qValues[curr_action])
+				beta = float(alpha) * (self.maze[curr_x][curr_y].reward + 
+					( self.discountFactor * max(self.maze[next_X][next_Y].qValues)) - 
+					self.maze[curr_x][curr_y].qValues[curr_action])
+
 				self.maze[curr_x][curr_y].qValues[curr_action] += float(beta)
 
 				#print "Q-Values: ", self.maze[curr_x][curr_y].qValues[curr_action]
@@ -269,9 +270,6 @@ class Puzzle(object):
 
 				curr_x = next_X
 				curr_y = next_Y
-
-				#print "num_moves ", num_moves
-				num_moves += 1
 
 			# Increment the number of times we've gone through the maze
 			numTrials += 1
@@ -290,6 +288,8 @@ def main():
 	puzzle.readInMaze()
 	#rmse = [500]
 
+	plotter = zeros((50,6,6))
+	for i 
 	puzzle.setUtilitiesMDP(50)
 	puzzle.printUtilities()
 	puzzle.setUtilitiesTDQL()
@@ -298,7 +298,7 @@ def main():
 	#Utilities
 	#for i in xrange(0,50):
 	#	puzzle.setUtilitiesMDP(i)
-		
+	
 	    
 	
 	#RMSE
